@@ -26,9 +26,42 @@ import {
   Presentation,
   Wand2,
   Loader2,
-  Lock
+  Lock,
+  Linkedin,
+  Twitter,
+  Facebook,
+  Send,
+  Newspaper,
+  Tag,
+  UserCheck,
+  BookOpen,
+  ListOrdered,
+  Star,
+  TrendingUp,
+  Target,
+  Users,
+  Building
 } from "lucide-react";
 import type { TemplateCategory, Template } from "@shared/schema";
+
+// Map template thumbnails to icons and colors
+const templateIconMap: Record<string, { icon: React.ElementType; color: string }> = {
+  instagram: { icon: Instagram, color: "text-pink-500" },
+  linkedin: { icon: Linkedin, color: "text-blue-600" },
+  twitter: { icon: Twitter, color: "text-sky-500" },
+  facebook: { icon: Facebook, color: "text-blue-500" },
+  welcome: { icon: Send, color: "text-green-500" },
+  newsletter: { icon: Newspaper, color: "text-orange-500" },
+  promo: { icon: Tag, color: "text-purple-500" },
+  reengagement: { icon: UserCheck, color: "text-teal-500" },
+  howto: { icon: BookOpen, color: "text-indigo-500" },
+  listicle: { icon: ListOrdered, color: "text-amber-500" },
+  review: { icon: Star, color: "text-yellow-500" },
+  news: { icon: TrendingUp, color: "text-red-500" },
+  pitch: { icon: Target, color: "text-emerald-500" },
+  sales: { icon: Users, color: "text-cyan-500" },
+  company: { icon: Building, color: "text-slate-500" },
+};
 
 const contentTypes: { value: TemplateCategory; label: string; icon: React.ElementType; description: string }[] = [
   { value: "social", label: "Social Media Post", icon: Instagram, description: "Instagram, Facebook, LinkedIn, Twitter" },
@@ -255,29 +288,36 @@ export default function CreateContent() {
                     {filteredTemplates.length === 0 ? (
                       <p className="text-sm text-muted-foreground p-2">No templates for this category</p>
                     ) : (
-                      filteredTemplates.map((template) => (
-                        <button
-                          key={template.id}
-                          onClick={() => handleTemplateSelect(template)}
-                          className={`w-full p-2 rounded-md text-left flex items-center justify-between gap-2 transition-all ${
-                            selectedTemplate?.id === template.id
-                              ? "bg-primary/10 border border-primary"
-                              : "hover:bg-muted"
-                          }`}
-                          data-testid={`button-template-${template.id}`}
-                        >
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">{template.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{template.description}</p>
-                          </div>
-                          {template.isPremium && (
-                            <Badge variant="secondary" className="shrink-0 gap-1">
-                              <Lock className="h-3 w-3" />
-                              Pro
-                            </Badge>
-                          )}
-                        </button>
-                      ))
+                      filteredTemplates.map((template) => {
+                        const iconConfig = templateIconMap[template.thumbnail] || { icon: FileText, color: "text-muted-foreground" };
+                        const IconComponent = iconConfig.icon;
+                        return (
+                          <button
+                            key={template.id}
+                            onClick={() => handleTemplateSelect(template)}
+                            className={`w-full p-2 rounded-md text-left flex items-center gap-3 transition-all ${
+                              selectedTemplate?.id === template.id
+                                ? "bg-primary/10 border border-primary"
+                                : "hover:bg-muted"
+                            }`}
+                            data-testid={`button-template-${template.id}`}
+                          >
+                            <div className={`shrink-0 w-8 h-8 rounded-md flex items-center justify-center bg-muted ${iconConfig.color}`}>
+                              <IconComponent className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium truncate">{template.name}</p>
+                              <p className="text-xs text-muted-foreground truncate">{template.description}</p>
+                            </div>
+                            {template.isPremium && (
+                              <Badge variant="secondary" className="shrink-0 gap-1">
+                                <Lock className="h-3 w-3" />
+                                Pro
+                              </Badge>
+                            )}
+                          </button>
+                        );
+                      })
                     )}
                   </div>
                 </ScrollArea>

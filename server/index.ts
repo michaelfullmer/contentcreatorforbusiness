@@ -129,14 +129,20 @@ app.get('/api/stripe/products', async (req, res) => {
   }
 });
 
-app.post('/api/stripe/checkout', async (req, res) => {
+app.post('/api/stripe/checkout', async (req: any, res) => {
   try {
-    const { priceId, email } = req.body;
+    const { priceId } = req.body;
+    const userId = req.user?.claims?.sub;
+    const userEmail = req.user?.claims?.email;
+    
     if (!priceId) {
       return res.status(400).json({ error: 'Price ID is required' });
     }
 
-    const customer = await stripeService.createCustomer(email || 'customer@example.com', 'temp-user');
+    const customer = await stripeService.createCustomer(
+      userEmail || 'customer@example.com', 
+      userId || 'anonymous'
+    );
     
     const session = await stripeService.createCheckoutSession(
       customer.id,

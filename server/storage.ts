@@ -1,31 +1,26 @@
 import { db } from "./db";
 import { 
-  users, 
   templates, 
   contentItems, 
   conversations, 
   messages,
   brandProfiles,
-  type User, 
-  type InsertUser,
+  userSubscriptions,
+  type User,
   type Template,
   type InsertTemplate,
   type ContentItem,
   type InsertContentItem,
   type Conversation,
-  type InsertConversation,
   type Message,
-  type InsertMessage,
   type BrandProfile,
-  type InsertBrandProfile
+  type InsertBrandProfile,
+  type UserSubscription,
+  type PlanType
 } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
-  // Users
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
   
   // Templates
   getTemplates(): Promise<Template[]>;
@@ -52,25 +47,15 @@ export interface IStorage {
   // Brand Profiles
   getBrandProfile(): Promise<BrandProfile | undefined>;
   saveBrandProfile(profile: InsertBrandProfile): Promise<BrandProfile>;
+  
+  // Subscriptions
+  getUserSubscription(userId: string): Promise<UserSubscription | undefined>;
+  createOrUpdateSubscription(userId: string, plan: PlanType, stripeCustomerId?: string, stripeSubscriptionId?: string): Promise<UserSubscription>;
+  incrementUsage(userId: string, type: 'content' | 'image'): Promise<void>;
+  resetMonthlyUsage(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
-  // Users
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
-  }
-
   // Templates
   async getTemplates(): Promise<Template[]> {
     return db.select().from(templates);
@@ -82,7 +67,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTemplate(template: InsertTemplate): Promise<Template> {
-    const [created] = await db.insert(templates).values(template).returning();
+    const [created] = await db.insert(templates).values(template as any).returning();
     return created;
   }
 
@@ -97,12 +82,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createContentItem(item: InsertContentItem): Promise<ContentItem> {
-    const [created] = await db.insert(contentItems).values(item).returning();
+    const [created] = await db.insert(contentItems).values(item as any).returning();
     return created;
   }
 
   async updateContentItem(id: number, item: Partial<InsertContentItem>): Promise<ContentItem | undefined> {
-    const [updated] = await db.update(contentItems).set(item).where(eq(contentItems.id, id)).returning();
+    const [updated] = await db.update(contentItems).set(item as any).where(eq(contentItems.id, id)).returning();
     return updated;
   }
 
@@ -154,6 +139,59 @@ export class DatabaseStorage implements IStorage {
     }
     const [created] = await db.insert(brandProfiles).values(profile).returning();
     return created;
+  }
+
+  // Subscriptions
+  async getUserSubscription(userId: string): Promise<UserSubscription | undefined> {
+    const [sub] = await db.select().from(userSubscriptions).where(eq(userSubscriptions.userId, userId));
+    return sub;
+  }
+
+  async createOrUpdateSubscription(
+    userId: string, 
+    plan: PlanType, 
+    stripeCustomerId?: string, 
+    stripeSubscriptionId?: string
+  ): Promise<UserSubscription> {
+    const existing = await this.getUserSubscription(userId);
+    if (existing) {
+      const [updated] = await db.update(userSubscriptions)
+        .set({ 
+          plan, 
+          stripeCustomerId: stripeCustomerId ?? existing.stripeCustomerId,
+          stripeSubscriptionId: stripeSubscriptionId ?? existing.stripeSubscriptionId 
+        })
+        .where(eq(userSubscriptions.userId, userId))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(userSubscriptions)
+      .values({ userId, plan, stripeCustomerId, stripeSubscriptionId })
+      .returning();
+    return created;
+  }
+
+  async incrementUsage(userId: string, type: 'content' | 'image'): Promise<void> {
+    const sub = await this.getUserSubscription(userId);
+    if (!sub) {
+      await this.createOrUpdateSubscription(userId, 'free');
+    }
+    
+    if (type === 'content') {
+      await db.update(userSubscriptions)
+        .set({ contentGenerationsUsed: (sub?.contentGenerationsUsed ?? 0) + 1 })
+        .where(eq(userSubscriptions.userId, userId));
+    } else {
+      await db.update(userSubscriptions)
+        .set({ imageGenerationsUsed: (sub?.imageGenerationsUsed ?? 0) + 1 })
+        .where(eq(userSubscriptions.userId, userId));
+    }
+  }
+
+  async resetMonthlyUsage(userId: string): Promise<void> {
+    await db.update(userSubscriptions)
+      .set({ contentGenerationsUsed: 0, imageGenerationsUsed: 0, currentPeriodStart: new Date() })
+      .where(eq(userSubscriptions.userId, userId));
   }
 }
 

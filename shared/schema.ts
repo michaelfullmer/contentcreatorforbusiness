@@ -6,6 +6,45 @@ import { z } from "zod";
 // Re-export auth models (users and sessions tables are defined here)
 export * from "./models/auth";
 
+// Plan types and limits
+export type PlanType = "free" | "pro" | "business";
+
+export const PLAN_LIMITS = {
+  free: {
+    contentGenerationsPerMonth: 10,
+    templatesAccess: "basic",
+    imageGenerations: 0,
+    brandProfiles: 1,
+  },
+  pro: {
+    contentGenerationsPerMonth: 100,
+    templatesAccess: "all",
+    imageGenerations: 20,
+    brandProfiles: 3,
+  },
+  business: {
+    contentGenerationsPerMonth: -1, // unlimited
+    templatesAccess: "all",
+    imageGenerations: -1, // unlimited
+    brandProfiles: -1, // unlimited
+  },
+} as const;
+
+// User subscriptions table
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  plan: text("plan").notNull().$type<PlanType>().default("free"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  contentGenerationsUsed: integer("content_generations_used").default(0),
+  imageGenerationsUsed: integer("image_generations_used").default(0),
+  currentPeriodStart: timestamp("current_period_start").default(sql`CURRENT_TIMESTAMP`),
+  currentPeriodEnd: timestamp("current_period_end"),
+});
+
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+
 // Template categories
 export type TemplateCategory = "social" | "blog" | "email" | "presentation";
 

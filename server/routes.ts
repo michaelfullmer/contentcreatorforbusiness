@@ -1,8 +1,34 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertContentItemSchema, insertBrandProfileSchema, type InsertTemplate } from "@shared/schema";
+import { insertContentItemSchema, insertBrandProfileSchema, type InsertTemplate, PLAN_LIMITS, type PlanType } from "@shared/schema";
 import OpenAI from "openai";
+
+// Helper to check usage limits
+async function checkUsageLimit(userId: string | undefined, type: 'content' | 'image'): Promise<{ allowed: boolean; remaining: number; limit: number }> {
+  if (!userId) {
+    // Anonymous users get free tier limits
+    return { allowed: true, remaining: 10, limit: 10 };
+  }
+  
+  const sub = await storage.getUserSubscription(userId);
+  const plan: PlanType = sub?.plan || 'free';
+  const limits = PLAN_LIMITS[plan];
+  
+  const limitKey = type === 'content' ? 'contentGenerationsPerMonth' : 'imageGenerations';
+  const usedKey = type === 'content' ? 'contentGenerationsUsed' : 'imageGenerationsUsed';
+  
+  const limit = limits[limitKey];
+  const used = sub?.[usedKey] ?? 0;
+  
+  // -1 means unlimited
+  if (limit === -1) {
+    return { allowed: true, remaining: -1, limit: -1 };
+  }
+  
+  const remaining = Math.max(0, limit - used);
+  return { allowed: remaining > 0, remaining, limit };
+}
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -46,13 +72,55 @@ export async function registerRoutes(
   // Seed templates on startup
   await seedTemplates();
   
+  // Subscription status endpoint
+  app.get("/api/subscription", async (req: any, res: Response) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.json({ 
+          plan: 'free', 
+          limits: PLAN_LIMITS.free,
+          usage: { contentGenerationsUsed: 0, imageGenerationsUsed: 0 }
+        });
+      }
+      
+      const sub = await storage.getUserSubscription(userId);
+      const plan: PlanType = sub?.plan || 'free';
+      
+      res.json({
+        plan,
+        limits: PLAN_LIMITS[plan],
+        usage: {
+          contentGenerationsUsed: sub?.contentGenerationsUsed ?? 0,
+          imageGenerationsUsed: sub?.imageGenerationsUsed ?? 0,
+        },
+        stripeSubscriptionId: sub?.stripeSubscriptionId,
+      });
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+      res.status(500).json({ error: "Failed to fetch subscription" });
+    }
+  });
+
   // Content generation endpoint with streaming
-  app.post("/api/generate-content", async (req: Request, res: Response) => {
+  app.post("/api/generate-content", async (req: any, res: Response) => {
     try {
       const { prompt, contentType, tone } = req.body;
+      const userId = req.user?.claims?.sub;
 
       if (!prompt) {
         return res.status(400).json({ error: "Prompt is required" });
+      }
+      
+      // Check usage limits
+      const usageCheck = await checkUsageLimit(userId, 'content');
+      if (!usageCheck.allowed) {
+        return res.status(403).json({ 
+          error: "Content generation limit reached", 
+          remaining: usageCheck.remaining,
+          limit: usageCheck.limit,
+          upgrade: true
+        });
       }
 
       const systemPrompt = `You are a professional content creator for small businesses. Generate ${contentType} content with a ${tone} tone. 
@@ -85,6 +153,11 @@ Generate professional, high-quality content that resonates with small business a
         if (content) {
           res.write(`data: ${JSON.stringify({ content })}\n\n`);
         }
+      }
+
+      // Increment usage after successful generation
+      if (userId) {
+        await storage.incrementUsage(userId, 'content');
       }
 
       res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
