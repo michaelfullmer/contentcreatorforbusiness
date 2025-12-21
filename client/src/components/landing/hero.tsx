@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, Sparkles, Zap, Users, BarChart3 } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ArrowRight, Play, Sparkles, Zap, Users, BarChart3, X } from "lucide-react";
+import demoVideo from "@assets/generated_videos/ai_content_creation_demo_video.mp4";
 
 export function Hero() {
   const [, setLocation] = useLocation();
+  const [showDemo, setShowDemo] = useState(false);
 
   return (
     <section className="relative min-h-[90vh] flex items-center pt-24 pb-16 overflow-hidden">
@@ -43,11 +47,11 @@ export function Hero() {
                 size="lg"
                 variant="outline"
                 className="gap-2"
-                onClick={() => setLocation("/dashboard/create")}
+                onClick={() => setShowDemo(true)}
                 data-testid="button-hero-watch-demo"
               >
                 <Play className="h-4 w-4" />
-                Try It Now
+                Watch Demo
               </Button>
             </div>
             
@@ -130,6 +134,31 @@ export function Hero() {
           </div>
         </div>
       </div>
+
+      <Dialog open={showDemo} onOpenChange={setShowDemo}>
+        <DialogContent className="sm:max-w-4xl p-0 overflow-hidden">
+          <div className="relative">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="absolute top-2 right-2 z-10"
+              onClick={() => setShowDemo(false)}
+              data-testid="button-close-demo"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <video
+              src={demoVideo}
+              controls
+              autoPlay
+              className="w-full aspect-video"
+              data-testid="video-demo"
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
