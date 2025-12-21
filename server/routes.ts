@@ -210,16 +210,22 @@ Generate professional, high-quality content that resonates with small business a
       // In production, you would integrate with a video generation API like Runway, Pika, etc.
       const videoPrompt = `Create a ${duration || 6} second ${aspectRatio === '9:16' ? 'vertical' : aspectRatio === '1:1' ? 'square' : 'horizontal'} video: ${prompt}`;
       
-      // For now, return a placeholder response
-      // In production, integrate with actual video generation API
-      const placeholderVideoUrl = `https://placehold.co/1920x1080/7c3aed/ffffff/mp4?text=Video+Preview`;
+      // For now, return a sample video placeholder
+      // In production, integrate with actual video generation API (Runway, Pika, etc.)
+      // Using a public domain sample video for demonstration
+      const sampleVideos = [
+        "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+        "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+      ];
+      const placeholderVideoUrl = sampleVideos[Math.floor(Math.random() * sampleVideos.length)];
       
       // Increment usage
       await storage.incrementUsage(userId, 'image');
 
       res.json({ 
         videoUrl: placeholderVideoUrl,
-        message: "Video generation initiated. In production, this would integrate with a video generation API.",
+        message: "Video generated successfully. (Demo: showing sample video - in production, this integrates with AI video APIs)",
         prompt: videoPrompt
       });
     } catch (error) {
@@ -267,14 +273,23 @@ Generate professional, high-quality content that resonates with small business a
 
       // For text-to-video templates, we would render text over a video template
       // In production, integrate with a video rendering service
-      const placeholderVideoUrl = `https://placehold.co/1920x1080/7c3aed/ffffff/mp4?text=${encodeURIComponent(textContent.slice(0, 20))}`;
+      // Using sample videos based on template type for demonstration
+      const templateVideos: Record<string, string> = {
+        promo_video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        reel: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+        explainer: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+        testimonial: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+        brand_story: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+      };
+      const placeholderVideoUrl = templateVideos[template.thumbnail] || 
+        "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
       
       // Increment usage
       await storage.incrementUsage(userId, 'image');
 
       res.json({ 
         videoUrl: placeholderVideoUrl,
-        message: "Template video created. In production, this would render text over the video template.",
+        message: "Template video created successfully. (Demo: showing sample video - in production, this renders text over templates)",
         template: template.name,
         text: textContent
       });
