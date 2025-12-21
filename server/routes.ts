@@ -102,11 +102,16 @@ export async function registerRoutes(
     }
   });
 
-  // Content generation endpoint with streaming
+  // Content generation endpoint with streaming (requires authentication)
   app.post("/api/generate-content", async (req: any, res: Response) => {
     try {
       const { prompt, contentType, tone } = req.body;
       const userId = req.user?.claims?.sub;
+
+      // Require authentication to track usage
+      if (!userId) {
+        return res.status(401).json({ error: "Please log in to generate content" });
+      }
 
       if (!prompt) {
         return res.status(400).json({ error: "Prompt is required" });

@@ -122,7 +122,26 @@ export default function CreateContent() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate content");
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          toast({
+            title: "Login required",
+            description: errorData.error || "Please log in to generate content.",
+            variant: "destructive"
+          });
+          setIsGenerating(false);
+          return;
+        }
+        if (response.status === 403 && errorData.upgrade) {
+          toast({
+            title: "Generation limit reached",
+            description: `You've used all ${errorData.limit} generations this month. Upgrade for more!`,
+            variant: "destructive"
+          });
+          setIsGenerating(false);
+          return;
+        }
+        throw new Error(errorData.error || "Failed to generate content");
       }
 
       const reader = response.body?.getReader();
