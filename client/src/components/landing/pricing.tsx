@@ -31,7 +31,7 @@ const fallbackPlans: PricingPlan[] = [
     description: "Perfect for trying out our tools",
     features: [
       "10 AI generations per month",
-      "3 templates",
+      "Basic templates",
       "Basic analytics",
       "Community support"
     ]
@@ -53,18 +53,19 @@ const fallbackPlans: PricingPlan[] = [
     isPopular: true
   },
   {
-    id: "business",
-    name: "Business",
-    price: 49,
+    id: "enterprise",
+    name: "Enterprise",
+    price: 99,
     period: "month",
     description: "For teams and agencies",
     features: [
       "Unlimited AI generations",
-      "Custom branding",
+      "All templates + custom",
       "API access",
-      "Custom templates",
+      "Custom branding",
       "Dedicated support",
-      "Team collaboration"
+      "Team collaboration",
+      "SSO & advanced security"
     ]
   }
 ];

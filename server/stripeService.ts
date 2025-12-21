@@ -11,6 +11,36 @@ export class StripeService {
     });
   }
 
+  async ensureProductExists(name: string, description: string, priceInCents: number, metadata: Record<string, string>) {
+    const stripe = await getUncachableStripeClient();
+    
+    // Check if product already exists by searching for it
+    const existingProducts = await stripe.products.search({
+      query: `name:'${name}'`,
+    });
+    
+    if (existingProducts.data.length > 0) {
+      return existingProducts.data[0];
+    }
+    
+    // Create the product
+    const product = await stripe.products.create({
+      name,
+      description,
+      metadata,
+    });
+    
+    // Create a price for the product
+    await stripe.prices.create({
+      product: product.id,
+      unit_amount: priceInCents,
+      currency: 'usd',
+      recurring: { interval: 'month' },
+    });
+    
+    return product;
+  }
+
   async createCheckoutSession(
     customerId: string, 
     priceId: string, 

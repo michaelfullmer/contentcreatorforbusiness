@@ -144,6 +144,15 @@ export class DatabaseStorage implements IStorage {
   // Subscriptions
   async getUserSubscription(userId: string): Promise<UserSubscription | undefined> {
     const [sub] = await db.select().from(userSubscriptions).where(eq(userSubscriptions.userId, userId));
+    if (sub) {
+      // Normalize legacy "business" plan to "enterprise"
+      if ((sub.plan as string) === 'business') {
+        sub.plan = 'enterprise';
+        await db.update(userSubscriptions)
+          .set({ plan: 'enterprise' })
+          .where(eq(userSubscriptions.userId, userId));
+      }
+    }
     return sub;
   }
 

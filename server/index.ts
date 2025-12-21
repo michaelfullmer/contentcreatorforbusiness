@@ -47,9 +47,18 @@ async function initStripe() {
     }
 
     console.log('Syncing Stripe data...');
-    stripeSync.syncBackfill()
-      .then(() => console.log('Stripe data synced'))
-      .catch((err: Error) => console.error('Error syncing Stripe data:', err));
+    await stripeSync.syncBackfill();
+    console.log('Stripe data synced');
+    
+    // Ensure Enterprise product exists
+    console.log('Ensuring Enterprise product exists...');
+    await stripeService.ensureProductExists(
+      'Enterprise',
+      'For teams and agencies - unlimited AI generations',
+      9900, // $99.00
+      { tier: 'enterprise' }
+    );
+    console.log('Enterprise product ready');
   } catch (error) {
     console.error('Failed to initialize Stripe:', error);
   }

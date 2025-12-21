@@ -24,25 +24,25 @@ async function seedProducts() {
 
   console.log('Pro Plan created:', proPlan.id);
 
-  console.log('Creating Business Plan...');
-  const businessPlan = await stripe.products.create({
-    name: 'Business Plan',
-    description: 'For teams - Unlimited AI generations, custom branding, API access, dedicated support',
+  console.log('Creating Enterprise Plan...');
+  const enterprisePlan = await stripe.products.create({
+    name: 'Enterprise Plan',
+    description: 'For teams and agencies - Unlimited AI generations, custom branding, API access, dedicated support',
     metadata: {
-      tier: 'business',
+      tier: 'enterprise',
       generations: 'unlimited',
     },
   });
 
   await stripe.prices.create({
-    product: businessPlan.id,
-    unit_amount: 4900,
+    product: enterprisePlan.id,
+    unit_amount: 9900,
     currency: 'usd',
     recurring: { interval: 'month' },
-    metadata: { plan: 'business-monthly' },
+    metadata: { plan: 'enterprise-monthly' },
   });
 
-  console.log('Business Plan created:', businessPlan.id);
+  console.log('Enterprise Plan created:', enterprisePlan.id);
 
   console.log('Products seeded successfully!');
 }
