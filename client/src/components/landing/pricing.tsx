@@ -1,11 +1,28 @@
+import { useState } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import type { PricingPlan } from "@shared/schema";
 
-const plans: PricingPlan[] = [
+interface StripeProduct {
+  id: string;
+  name: string;
+  description: string;
+  metadata: Record<string, string>;
+  prices: {
+    id: string;
+    unit_amount: number;
+    currency: string;
+    recurring: { interval: string } | null;
+  }[];
+}
+
+const fallbackPlans: PricingPlan[] = [
   {
     id: "free",
     name: "Free",
@@ -26,7 +43,7 @@ const plans: PricingPlan[] = [
     period: "month",
     description: "For growing small businesses",
     features: [
-      "Unlimited AI generations",
+      "100 AI generations per month",
       "All templates",
       "Advanced analytics",
       "Priority support",
@@ -36,24 +53,66 @@ const plans: PricingPlan[] = [
     isPopular: true
   },
   {
-    id: "enterprise",
-    name: "Enterprise",
-    price: 99,
+    id: "business",
+    name: "Business",
+    price: 49,
     period: "month",
     description: "For teams and agencies",
     features: [
-      "Everything in Pro",
-      "Team collaboration",
+      "Unlimited AI generations",
+      "Custom branding",
       "API access",
       "Custom templates",
-      "Dedicated account manager",
-      "White-label options"
+      "Dedicated support",
+      "Team collaboration"
     ]
   }
 ];
 
 export function Pricing() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
+
+  const { data: stripeProducts } = useQuery<{ data: StripeProduct[] }>({
+    queryKey: ['/api/stripe/products'],
+  });
+
+  const handleSubscribe = async (priceId: string) => {
+    setLoadingPriceId(priceId);
+    try {
+      const response = await apiRequest('POST', '/api/stripe/checkout', { priceId });
+      const { url } = await response.json();
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to start checkout. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPriceId(null);
+    }
+  };
+
+  const plans = fallbackPlans.map(plan => {
+    if (plan.id === 'free') return { ...plan, stripePrice: null };
+    
+    const stripeProduct = stripeProducts?.data?.find(p => 
+      p.name.toLowerCase().includes(plan.id) || 
+      p.metadata?.tier === plan.id
+    );
+    
+    const stripePrice = stripeProduct?.prices?.[0];
+    
+    return {
+      ...plan,
+      price: stripePrice ? stripePrice.unit_amount / 100 : plan.price,
+      stripePrice: stripePrice?.id || null,
+    };
+  });
 
   return (
     <section id="pricing" className="py-20 bg-muted/30">
@@ -102,10 +161,23 @@ export function Pricing() {
                 <Button 
                   className="w-full" 
                   variant={plan.isPopular ? "default" : "outline"}
-                  onClick={() => setLocation("/dashboard")}
+                  onClick={() => {
+                    if (plan.stripePrice) {
+                      handleSubscribe(plan.stripePrice);
+                    } else {
+                      setLocation("/dashboard");
+                    }
+                  }}
+                  disabled={!!loadingPriceId && loadingPriceId === plan.stripePrice}
                   data-testid={`button-pricing-${plan.id}`}
                 >
-                  {plan.price === 0 ? "Get Started" : "Start Free Trial"}
+                  {loadingPriceId === plan.stripePrice ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : plan.price === 0 ? (
+                    "Get Started"
+                  ) : (
+                    "Subscribe"
+                  )}
                 </Button>
               </CardContent>
             </Card>

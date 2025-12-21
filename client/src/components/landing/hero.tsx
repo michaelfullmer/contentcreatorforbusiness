@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { ArrowRight, Play, Sparkles, Zap, Users, BarChart3, X } from "lucide-react";
 import demoVideo from "@assets/generated_videos/ai_content_creation_demo_video.mp4";
 
@@ -136,7 +137,10 @@ export function Hero() {
       </div>
 
       <Dialog open={showDemo} onOpenChange={setShowDemo}>
-        <DialogContent className="sm:max-w-4xl p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-4xl p-0 overflow-hidden" aria-describedby={undefined}>
+          <VisuallyHidden>
+            <DialogTitle>Demo Video</DialogTitle>
+          </VisuallyHidden>
           <div className="relative">
             <Button
               size="icon"
