@@ -51,13 +51,13 @@ export function Header() {
             <Button
               variant="ghost"
               className="hidden sm:inline-flex"
-              onClick={() => setLocation("/dashboard")}
+              onClick={() => window.location.href = "/api/login"}
               data-testid="button-login"
             >
               Log in
             </Button>
             <Button
-              onClick={() => setLocation("/dashboard")}
+              onClick={() => window.location.href = "/api/login"}
               data-testid="button-get-started"
             >
               Get Started
