@@ -60,11 +60,26 @@ const fallbackPlans: PricingPlan[] = [
     description: "For teams and agencies",
     features: [
       "Unlimited AI generations",
-      "All templates + custom",
-      "API access",
+      "All templates",
       "Custom branding",
-      "Dedicated support",
-      "Team collaboration"
+      "Priority support",
+      "Up to 5 team members"
+    ]
+  },
+  {
+    id: "enterprise_plus",
+    name: "Enterprise Plus",
+    price: 99,
+    period: "month",
+    description: "For large teams & agencies",
+    features: [
+      "Everything in Enterprise",
+      "Full API access",
+      "White-label solution",
+      "Unlimited team members",
+      "Custom integrations",
+      "Dedicated account manager",
+      "SLA guarantee"
     ]
   }
 ];
@@ -127,7 +142,7 @@ export function Pricing() {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {plans.map((plan) => (
             <Card 
               key={plan.id}

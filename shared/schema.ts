@@ -7,7 +7,7 @@ import { z } from "zod";
 export * from "./models/auth";
 
 // Plan types and limits
-export type PlanType = "free" | "pro" | "enterprise";
+export type PlanType = "free" | "pro" | "enterprise" | "enterprise_plus";
 
 export const PLAN_LIMITS = {
   free: {
@@ -15,18 +15,36 @@ export const PLAN_LIMITS = {
     templatesAccess: "basic",
     imageGenerations: 0,
     brandProfiles: 1,
+    teamMembers: 1,
+    apiAccess: false,
+    whiteLabeling: false,
   },
   pro: {
     contentGenerationsPerMonth: 100,
     templatesAccess: "all",
     imageGenerations: 20,
     brandProfiles: 3,
+    teamMembers: 1,
+    apiAccess: false,
+    whiteLabeling: false,
   },
   enterprise: {
     contentGenerationsPerMonth: -1, // unlimited
     templatesAccess: "all",
     imageGenerations: -1, // unlimited
     brandProfiles: -1, // unlimited
+    teamMembers: 5,
+    apiAccess: false,
+    whiteLabeling: false,
+  },
+  enterprise_plus: {
+    contentGenerationsPerMonth: -1, // unlimited
+    templatesAccess: "all",
+    imageGenerations: -1, // unlimited
+    brandProfiles: -1, // unlimited
+    teamMembers: -1, // unlimited
+    apiAccess: true,
+    whiteLabeling: true,
   },
 } as const;
 

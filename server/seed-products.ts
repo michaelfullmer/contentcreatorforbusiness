@@ -44,6 +44,26 @@ async function seedProducts() {
 
   console.log('Enterprise Plan created:', enterprisePlan.id);
 
+  console.log('Creating Enterprise Plus Plan...');
+  const enterprisePlusPlan = await stripe.products.create({
+    name: 'Enterprise Plus Plan',
+    description: 'Full API access, white-labeling, unlimited team members, dedicated support',
+    metadata: {
+      tier: 'enterprise_plus',
+      generations: 'unlimited',
+    },
+  });
+
+  await stripe.prices.create({
+    product: enterprisePlusPlan.id,
+    unit_amount: 9900,
+    currency: 'usd',
+    recurring: { interval: 'month' },
+    metadata: { plan: 'enterprise_plus-monthly' },
+  });
+
+  console.log('Enterprise Plus Plan created:', enterprisePlusPlan.id);
+
   console.log('Products seeded successfully!');
 }
 

@@ -110,7 +110,7 @@ export default function CreateContent() {
     queryKey: ["/api/subscription"]
   });
 
-  const canAccessPremium = subscription?.plan === 'pro' || subscription?.plan === 'enterprise';
+  const canAccessPremium = subscription?.plan === 'pro' || subscription?.plan === 'enterprise' || subscription?.plan === 'enterprise_plus';
   const filteredTemplates = templates.filter(t => t.category === contentType);
 
   const handleGenerate = async () => {
