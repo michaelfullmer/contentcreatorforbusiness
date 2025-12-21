@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertContentItemSchema } from "@shared/schema";
+import { insertContentItemSchema, insertBrandProfileSchema, type InsertTemplate } from "@shared/schema";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
@@ -9,10 +9,42 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
+// Default templates to seed
+const defaultTemplates: InsertTemplate[] = [
+  { name: "Instagram Caption", description: "Engaging captions for Instagram posts with hashtags", category: "social", thumbnail: "instagram", isPremium: false },
+  { name: "LinkedIn Post", description: "Professional posts for LinkedIn networking", category: "social", thumbnail: "linkedin", isPremium: false },
+  { name: "Twitter Thread", description: "Compelling Twitter/X threads that drive engagement", category: "social", thumbnail: "twitter", isPremium: false },
+  { name: "Facebook Ad", description: "High-converting Facebook advertisement copy", category: "social", thumbnail: "facebook", isPremium: true },
+  { name: "Welcome Email", description: "Warm welcome emails for new subscribers", category: "email", thumbnail: "welcome", isPremium: false },
+  { name: "Newsletter", description: "Engaging weekly or monthly newsletters", category: "email", thumbnail: "newsletter", isPremium: false },
+  { name: "Promotional Email", description: "Sales and promotional email campaigns", category: "email", thumbnail: "promo", isPremium: false },
+  { name: "Re-engagement Email", description: "Win back inactive subscribers", category: "email", thumbnail: "reengagement", isPremium: true },
+  { name: "How-To Guide", description: "Step-by-step tutorial blog posts", category: "blog", thumbnail: "howto", isPremium: false },
+  { name: "Listicle", description: "Numbered list articles that are easy to read", category: "blog", thumbnail: "listicle", isPremium: false },
+  { name: "Product Review", description: "Detailed product review articles", category: "blog", thumbnail: "review", isPremium: false },
+  { name: "Industry News", description: "Commentary on industry trends and news", category: "blog", thumbnail: "news", isPremium: true },
+  { name: "Pitch Deck", description: "Investor pitch presentation content", category: "presentation", thumbnail: "pitch", isPremium: true },
+  { name: "Sales Presentation", description: "Product or service sales slides", category: "presentation", thumbnail: "sales", isPremium: false },
+  { name: "Company Overview", description: "About us presentation content", category: "presentation", thumbnail: "company", isPremium: false },
+];
+
+async function seedTemplates() {
+  const existing = await storage.getTemplates();
+  if (existing.length === 0) {
+    for (const template of defaultTemplates) {
+      await storage.createTemplate(template);
+    }
+    console.log("Seeded default templates");
+  }
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  
+  // Seed templates on startup
+  await seedTemplates();
   
   // Content generation endpoint with streaming
   app.post("/api/generate-content", async (req: Request, res: Response) => {
@@ -145,6 +177,31 @@ Generate professional, high-quality content that resonates with small business a
     } catch (error) {
       console.error("Error fetching templates:", error);
       res.status(500).json({ error: "Failed to fetch templates" });
+    }
+  });
+
+  // Brand profile endpoints
+  app.get("/api/brand-profile", async (req: Request, res: Response) => {
+    try {
+      const profile = await storage.getBrandProfile();
+      res.json(profile || null);
+    } catch (error) {
+      console.error("Error fetching brand profile:", error);
+      res.status(500).json({ error: "Failed to fetch brand profile" });
+    }
+  });
+
+  app.post("/api/brand-profile", async (req: Request, res: Response) => {
+    try {
+      const parsed = insertBrandProfileSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid brand profile data", details: parsed.error });
+      }
+      const profile = await storage.saveBrandProfile(parsed.data);
+      res.json(profile);
+    } catch (error) {
+      console.error("Error saving brand profile:", error);
+      res.status(500).json({ error: "Failed to save brand profile" });
     }
   });
 

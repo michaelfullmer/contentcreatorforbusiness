@@ -43,10 +43,11 @@ export function Hero() {
                 size="lg"
                 variant="outline"
                 className="gap-2"
+                onClick={() => setLocation("/dashboard/create")}
                 data-testid="button-hero-watch-demo"
               >
                 <Play className="h-4 w-4" />
-                Watch Demo
+                Try It Now
               </Button>
             </div>
             

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,7 @@ const categories: { value: TemplateCategory | "all"; label: string; icon: React.
 ];
 
 export function Templates() {
+  const [, setLocation] = useLocation();
   const [activeCategory, setActiveCategory] = useState<TemplateCategory | "all">("all");
   
   const filteredTemplates = activeCategory === "all" 
@@ -77,8 +79,8 @@ export function Templates() {
             >
               <div className={`h-40 bg-gradient-to-br ${template.gradient} relative`}>
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Button variant="secondary" size="sm">
-                    Preview
+                  <Button variant="secondary" size="sm" onClick={() => setLocation("/dashboard/create")}>
+                    Use Template
                   </Button>
                 </div>
                 {template.isPremium && (
@@ -100,7 +102,7 @@ export function Templates() {
         </div>
         
         <div className="text-center mt-12">
-          <Button variant="outline" size="lg" data-testid="button-view-all-templates">
+          <Button variant="outline" size="lg" onClick={() => setLocation("/dashboard/create")} data-testid="button-view-all-templates">
             View All Templates
           </Button>
         </div>

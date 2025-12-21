@@ -5,6 +5,7 @@ import {
   contentItems, 
   conversations, 
   messages,
+  brandProfiles,
   type User, 
   type InsertUser,
   type Template,
@@ -14,7 +15,9 @@ import {
   type Conversation,
   type InsertConversation,
   type Message,
-  type InsertMessage
+  type InsertMessage,
+  type BrandProfile,
+  type InsertBrandProfile
 } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
@@ -45,6 +48,10 @@ export interface IStorage {
   // Messages
   getMessagesByConversation(conversationId: number): Promise<Message[]>;
   createMessage(conversationId: number, role: string, content: string): Promise<Message>;
+  
+  // Brand Profiles
+  getBrandProfile(): Promise<BrandProfile | undefined>;
+  saveBrandProfile(profile: InsertBrandProfile): Promise<BrandProfile>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -131,6 +138,22 @@ export class DatabaseStorage implements IStorage {
   async createMessage(conversationId: number, role: string, content: string): Promise<Message> {
     const [message] = await db.insert(messages).values({ conversationId, role, content }).returning();
     return message;
+  }
+
+  // Brand Profiles
+  async getBrandProfile(): Promise<BrandProfile | undefined> {
+    const [profile] = await db.select().from(brandProfiles).limit(1);
+    return profile;
+  }
+
+  async saveBrandProfile(profile: InsertBrandProfile): Promise<BrandProfile> {
+    const existing = await this.getBrandProfile();
+    if (existing) {
+      const [updated] = await db.update(brandProfiles).set(profile).where(eq(brandProfiles.id, existing.id)).returning();
+      return updated;
+    }
+    const [created] = await db.insert(brandProfiles).values(profile).returning();
+    return created;
   }
 }
 

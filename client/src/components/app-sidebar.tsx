@@ -19,7 +19,7 @@ import {
   FileText,
   Calendar,
   BarChart3,
-  Settings,
+  Building2,
   HelpCircle,
   Plus,
   LogOut,
@@ -51,14 +51,14 @@ const mainNavItems = [
     url: "/dashboard/analytics",
     icon: BarChart3,
   },
+  {
+    title: "Brand Profile",
+    url: "/dashboard/brand",
+    icon: Building2,
+  },
 ];
 
 const secondaryNavItems = [
-  {
-    title: "Settings",
-    url: "/dashboard/settings",
-    icon: Settings,
-  },
   {
     title: "Help",
     url: "/dashboard/help",

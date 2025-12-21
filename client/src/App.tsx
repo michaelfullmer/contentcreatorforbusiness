@@ -14,6 +14,7 @@ import CreateContent from "@/pages/dashboard/create";
 import ContentLibrary from "@/pages/dashboard/content";
 import ContentCalendar from "@/pages/dashboard/calendar";
 import Analytics from "@/pages/dashboard/analytics";
+import BrandProfile from "@/pages/dashboard/brand";
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   const style = {
@@ -66,6 +67,11 @@ function Router() {
       <Route path="/dashboard/analytics">
         <DashboardLayout>
           <Analytics />
+        </DashboardLayout>
+      </Route>
+      <Route path="/dashboard/brand">
+        <DashboardLayout>
+          <BrandProfile />
         </DashboardLayout>
       </Route>
       <Route component={NotFound} />

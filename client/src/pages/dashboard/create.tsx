@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Sparkles, 
@@ -23,9 +25,10 @@ import {
   FileText,
   Presentation,
   Wand2,
-  Loader2
+  Loader2,
+  Lock
 } from "lucide-react";
-import type { TemplateCategory } from "@shared/schema";
+import type { TemplateCategory, Template } from "@shared/schema";
 
 const contentTypes: { value: TemplateCategory; label: string; icon: React.ElementType; description: string }[] = [
   { value: "social", label: "Social Media Post", icon: Instagram, description: "Instagram, Facebook, LinkedIn, Twitter" },
@@ -53,6 +56,13 @@ export default function CreateContent() {
   const [generatedContent, setGeneratedContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [title, setTitle] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+
+  const { data: templates = [] } = useQuery<Template[]>({
+    queryKey: ["/api/templates"]
+  });
+
+  const filteredTemplates = templates.filter(t => t.category === contentType);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -131,6 +141,35 @@ export default function CreateContent() {
     });
   };
 
+  const handleDownload = () => {
+    const blob = new Blob([generatedContent], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title || "content"}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({
+      title: "Downloaded",
+      description: "Content has been downloaded as a text file."
+    });
+  };
+
+  const handleTemplateSelect = (template: Template) => {
+    if (template.isPremium) {
+      toast({
+        title: "Premium Template",
+        description: "Upgrade to a paid plan to unlock this template.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setSelectedTemplate(template);
+    setPrompt(`Create a ${template.name}: ${template.description}`);
+  };
+
   const handleSave = async () => {
     if (!generatedContent.trim() || !title.trim()) {
       toast({
@@ -207,6 +246,41 @@ export default function CreateContent() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Template (Optional)</Label>
+                <ScrollArea className="h-32 border border-border rounded-lg p-2">
+                  <div className="space-y-1">
+                    {filteredTemplates.length === 0 ? (
+                      <p className="text-sm text-muted-foreground p-2">No templates for this category</p>
+                    ) : (
+                      filteredTemplates.map((template) => (
+                        <button
+                          key={template.id}
+                          onClick={() => handleTemplateSelect(template)}
+                          className={`w-full p-2 rounded-md text-left flex items-center justify-between gap-2 transition-all ${
+                            selectedTemplate?.id === template.id
+                              ? "bg-primary/10 border border-primary"
+                              : "hover:bg-muted"
+                          }`}
+                          data-testid={`button-template-${template.id}`}
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{template.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{template.description}</p>
+                          </div>
+                          {template.isPremium && (
+                            <Badge variant="secondary" className="shrink-0 gap-1">
+                              <Lock className="h-3 w-3" />
+                              Pro
+                            </Badge>
+                          )}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
               </div>
 
               <div className="space-y-2">
@@ -292,14 +366,17 @@ export default function CreateContent() {
                   <div className="flex-1 p-4 rounded-lg bg-muted/50 border border-border mb-4 overflow-auto">
                     <pre className="whitespace-pre-wrap text-sm font-sans">{generatedContent}</pre>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <Button onClick={handleSave} className="flex-1 gap-2" data-testid="button-save">
-                      <Download className="h-4 w-4" />
                       Save as Draft
                     </Button>
                     <Button variant="outline" onClick={handleCopy} className="gap-2" data-testid="button-copy-main">
                       <Copy className="h-4 w-4" />
                       Copy
+                    </Button>
+                    <Button variant="outline" onClick={handleDownload} className="gap-2" data-testid="button-download">
+                      <Download className="h-4 w-4" />
+                      Download
                     </Button>
                   </div>
                 </div>

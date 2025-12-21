@@ -85,6 +85,25 @@ export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
+// Brand profile table
+export const brandProfiles = pgTable("brand_profiles", {
+  id: serial("id").primaryKey(),
+  businessName: text("business_name").notNull(),
+  industry: text("industry"),
+  targetAudience: text("target_audience"),
+  brandVoice: text("brand_voice"),
+  keyMessages: text("key_messages"),
+  brandColors: text("brand_colors"),
+  logoUrl: text("logo_url"),
+});
+
+export const insertBrandProfileSchema = createInsertSchema(brandProfiles).omit({
+  id: true,
+});
+
+export type InsertBrandProfile = z.infer<typeof insertBrandProfileSchema>;
+export type BrandProfile = typeof brandProfiles.$inferSelect;
+
 // Feature type for landing page
 export interface Feature {
   id: string;
