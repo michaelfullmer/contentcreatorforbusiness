@@ -55,7 +55,7 @@ async function initStripe() {
     await stripeService.ensureProductExists(
       'Enterprise',
       'For teams and agencies - unlimited AI generations',
-      9900, // $99.00
+      4999, // $49.99
       { tier: 'enterprise' }
     );
     console.log('Enterprise product ready');

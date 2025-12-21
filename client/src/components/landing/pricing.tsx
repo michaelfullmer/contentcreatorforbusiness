@@ -39,7 +39,7 @@ const fallbackPlans: PricingPlan[] = [
   {
     id: "pro",
     name: "Pro",
-    price: 29,
+    price: 29.99,
     period: "month",
     description: "For growing small businesses",
     features: [
@@ -55,7 +55,7 @@ const fallbackPlans: PricingPlan[] = [
   {
     id: "enterprise",
     name: "Enterprise",
-    price: 99,
+    price: 49.99,
     period: "month",
     description: "For teams and agencies",
     features: [
@@ -64,8 +64,7 @@ const fallbackPlans: PricingPlan[] = [
       "API access",
       "Custom branding",
       "Dedicated support",
-      "Team collaboration",
-      "SSO & advanced security"
+      "Team collaboration"
     ]
   }
 ];

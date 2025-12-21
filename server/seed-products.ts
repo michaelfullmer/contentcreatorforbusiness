@@ -36,7 +36,7 @@ async function seedProducts() {
 
   await stripe.prices.create({
     product: enterprisePlan.id,
-    unit_amount: 9900,
+    unit_amount: 4999,
     currency: 'usd',
     recurring: { interval: 'month' },
     metadata: { plan: 'enterprise-monthly' },

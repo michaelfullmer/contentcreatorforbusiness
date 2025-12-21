@@ -81,6 +81,17 @@ const toneOptions = [
   "Inspirational"
 ];
 
+interface SubscriptionData {
+  plan: string;
+  limits: {
+    contentGenerationsPerMonth: number;
+    templatesAccess: string;
+  };
+  usage: {
+    contentGenerationsUsed: number;
+  };
+}
+
 export default function CreateContent() {
   const { toast } = useToast();
   const [contentType, setContentType] = useState<TemplateCategory>("social");
@@ -95,6 +106,11 @@ export default function CreateContent() {
     queryKey: ["/api/templates"]
   });
 
+  const { data: subscription } = useQuery<SubscriptionData>({
+    queryKey: ["/api/subscription"]
+  });
+
+  const canAccessPremium = subscription?.plan === 'pro' || subscription?.plan === 'enterprise';
   const filteredTemplates = templates.filter(t => t.category === contentType);
 
   const handleGenerate = async () => {
@@ -210,10 +226,10 @@ export default function CreateContent() {
   };
 
   const handleTemplateSelect = (template: Template) => {
-    if (template.isPremium) {
+    if (template.isPremium && !canAccessPremium) {
       toast({
         title: "Premium Template",
-        description: "Upgrade to a paid plan to unlock this template.",
+        description: "Upgrade to Pro or Enterprise to unlock this template.",
         variant: "destructive"
       });
       return;
@@ -328,9 +344,14 @@ export default function CreateContent() {
                               <p className="text-sm font-medium truncate">{template.name}</p>
                               <p className="text-xs text-muted-foreground truncate">{template.description}</p>
                             </div>
-                            {template.isPremium && (
+                            {template.isPremium && !canAccessPremium && (
                               <Badge variant="secondary" className="shrink-0 gap-1">
                                 <Lock className="h-3 w-3" />
+                                Pro
+                              </Badge>
+                            )}
+                            {template.isPremium && canAccessPremium && (
+                              <Badge variant="outline" className="shrink-0 text-primary border-primary">
                                 Pro
                               </Badge>
                             )}
