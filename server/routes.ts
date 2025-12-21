@@ -52,6 +52,11 @@ const defaultTemplates: InsertTemplate[] = [
   { name: "Pitch Deck", description: "Investor pitch presentation content", category: "presentation", thumbnail: "pitch", isPremium: true },
   { name: "Sales Presentation", description: "Product or service sales slides", category: "presentation", thumbnail: "sales", isPremium: false },
   { name: "Company Overview", description: "About us presentation content", category: "presentation", thumbnail: "company", isPremium: false },
+  { name: "Product Promo Video", description: "Short promotional video for products", category: "video", thumbnail: "promo_video", isPremium: false },
+  { name: "Social Media Reel", description: "Vertical video for Instagram/TikTok", category: "video", thumbnail: "reel", isPremium: false },
+  { name: "Explainer Video", description: "Animated explainer for services", category: "video", thumbnail: "explainer", isPremium: true },
+  { name: "Testimonial Video", description: "Customer testimonial style video", category: "video", thumbnail: "testimonial", isPremium: false },
+  { name: "Brand Story Video", description: "Cinematic brand storytelling", category: "video", thumbnail: "brand_story", isPremium: true },
 ];
 
 async function seedTemplates() {
@@ -175,6 +180,107 @@ Generate professional, high-quality content that resonates with small business a
       } else {
         res.status(500).json({ error: "Failed to generate content" });
       }
+    }
+  });
+
+  // AI Video generation endpoint
+  app.post("/api/generate-video", async (req: any, res: Response) => {
+    try {
+      const { prompt, aspectRatio, duration } = req.body;
+      const userId = req.user?.claims?.sub;
+
+      if (!userId) {
+        return res.status(401).json({ error: "Please log in to generate videos" });
+      }
+
+      if (!prompt) {
+        return res.status(400).json({ error: "Prompt is required" });
+      }
+
+      // Check usage limits (use image generation limits for video)
+      const usageCheck = await checkUsageLimit(userId, 'image');
+      if (!usageCheck.allowed) {
+        return res.status(403).json({ 
+          error: "Video generation limit reached. Upgrade your plan for more.",
+          upgrade: true
+        });
+      }
+
+      // Use OpenAI to generate a video description, then create a placeholder
+      // In production, you would integrate with a video generation API like Runway, Pika, etc.
+      const videoPrompt = `Create a ${duration || 6} second ${aspectRatio === '9:16' ? 'vertical' : aspectRatio === '1:1' ? 'square' : 'horizontal'} video: ${prompt}`;
+      
+      // For now, return a placeholder response
+      // In production, integrate with actual video generation API
+      const placeholderVideoUrl = `https://placehold.co/1920x1080/7c3aed/ffffff/mp4?text=Video+Preview`;
+      
+      // Increment usage
+      await storage.incrementUsage(userId, 'image');
+
+      res.json({ 
+        videoUrl: placeholderVideoUrl,
+        message: "Video generation initiated. In production, this would integrate with a video generation API.",
+        prompt: videoPrompt
+      });
+    } catch (error) {
+      console.error("Error generating video:", error);
+      res.status(500).json({ error: "Failed to generate video" });
+    }
+  });
+
+  // Template-based video generation endpoint
+  app.post("/api/generate-video-from-template", async (req: any, res: Response) => {
+    try {
+      const { templateId, textContent, aspectRatio } = req.body;
+      const userId = req.user?.claims?.sub;
+
+      if (!userId) {
+        return res.status(401).json({ error: "Please log in to generate videos" });
+      }
+
+      if (!templateId || !textContent) {
+        return res.status(400).json({ error: "Template ID and text content are required" });
+      }
+
+      const template = await storage.getTemplate(templateId);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      // Check if user can access premium template
+      if (template.isPremium) {
+        const sub = await storage.getUserSubscription(userId);
+        const plan = sub?.plan || 'free';
+        if (plan === 'free') {
+          return res.status(403).json({ error: "Premium template requires Pro or higher plan" });
+        }
+      }
+
+      // Check usage limits
+      const usageCheck = await checkUsageLimit(userId, 'image');
+      if (!usageCheck.allowed) {
+        return res.status(403).json({ 
+          error: "Video generation limit reached. Upgrade your plan for more.",
+          upgrade: true
+        });
+      }
+
+      // For text-to-video templates, we would render text over a video template
+      // In production, integrate with a video rendering service
+      const placeholderVideoUrl = `https://placehold.co/1920x1080/7c3aed/ffffff/mp4?text=${encodeURIComponent(textContent.slice(0, 20))}`;
+      
+      // Increment usage
+      await storage.incrementUsage(userId, 'image');
+
+      res.json({ 
+        videoUrl: placeholderVideoUrl,
+        message: "Template video created. In production, this would render text over the video template.",
+        template: template.name,
+        text: textContent
+      });
+    } catch (error) {
+      console.error("Error generating template video:", error);
+      res.status(500).json({ error: "Failed to generate video from template" });
     }
   });
 

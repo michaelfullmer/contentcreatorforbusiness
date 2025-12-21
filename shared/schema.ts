@@ -64,7 +64,7 @@ export const userSubscriptions = pgTable("user_subscriptions", {
 export type UserSubscription = typeof userSubscriptions.$inferSelect;
 
 // Template categories
-export type TemplateCategory = "social" | "blog" | "email" | "presentation";
+export type TemplateCategory = "social" | "blog" | "email" | "presentation" | "video";
 
 // Templates table
 export const templates = pgTable("templates", {

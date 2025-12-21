@@ -11,6 +11,7 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import DashboardHome from "@/pages/dashboard/index";
 import CreateContent from "@/pages/dashboard/create";
+import VideoGeneration from "@/pages/dashboard/video";
 import ContentLibrary from "@/pages/dashboard/content";
 import ContentCalendar from "@/pages/dashboard/calendar";
 import Analytics from "@/pages/dashboard/analytics";
@@ -52,6 +53,11 @@ function Router() {
       <Route path="/dashboard/create">
         <DashboardLayout>
           <CreateContent />
+        </DashboardLayout>
+      </Route>
+      <Route path="/dashboard/video">
+        <DashboardLayout>
+          <VideoGeneration />
         </DashboardLayout>
       </Route>
       <Route path="/dashboard/content">

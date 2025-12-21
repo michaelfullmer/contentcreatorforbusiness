@@ -22,6 +22,7 @@ import {
   Building2,
   HelpCircle,
   Plus,
+  Video,
   LogOut,
 } from "lucide-react";
 
@@ -35,6 +36,11 @@ const mainNavItems = [
     title: "Create Content",
     url: "/dashboard/create",
     icon: Plus,
+  },
+  {
+    title: "Create Video",
+    url: "/dashboard/video",
+    icon: Video,
   },
   {
     title: "My Content",
