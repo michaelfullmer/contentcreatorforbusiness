@@ -55,9 +55,12 @@ async function buildAll() {
     define: {
       "process.env.NODE_ENV": '"production"',
     },
-    minify: true,
+    minify: false, // CHANGED: Disable minification to prevent corruption
+    sourcemap: true, // ADDED: Enable source maps for debugging
     external: externals,
     logLevel: "info",
+    target: "node18", // ADDED: Specify target Node version
+    mainFields: ["module", "main"], // ADDED: Help resolve modules correctly
   });
 }
 
