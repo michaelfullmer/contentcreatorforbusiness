@@ -24,7 +24,8 @@ import {
   Trash2,
   Edit3,
   MoreVertical,
-  Filter
+  Filter,
+  Video
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -39,14 +40,16 @@ const categoryIcons: Record<TemplateCategory, React.ElementType> = {
   social: Instagram,
   email: Mail,
   blog: FileText,
-  presentation: Presentation
+  presentation: Presentation,
+  video: Video
 };
 
 const categoryColors: Record<TemplateCategory, string> = {
   social: "bg-violet-500",
   email: "bg-blue-500",
   blog: "bg-emerald-500",
-  presentation: "bg-orange-500"
+  presentation: "bg-orange-500",
+  video: "bg-red-500"
 };
 
 export default function ContentLibrary() {
